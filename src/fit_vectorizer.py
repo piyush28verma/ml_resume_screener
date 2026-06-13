@@ -29,9 +29,12 @@ def clean_text(text):
     words = [w for w in words if w not in stop_words]
     return " ".join(words)
 
+import os
+
 # Load dataset
 print("Loading dataset...")
-df = pd.read_csv("resume_job_matching_dataset.csv")
+dataset_path = os.path.join(os.path.dirname(__file__), "resume_dataset.csv")
+df = pd.read_csv(dataset_path)
 
 # Clean resumes
 print("Cleaning resumes...")
@@ -44,5 +47,6 @@ X_tfidf = tfidf_vectorizer.fit_transform(df['resume_clean'])
 
 # Save vectorizer
 print("Saving tfidf_vectorizer.pkl...")
-joblib.dump(tfidf_vectorizer, "tfidf_vectorizer.pkl")
+vectorizer_path = os.path.join(os.path.dirname(__file__), "tfidf_vectorizer.pkl")
+joblib.dump(tfidf_vectorizer, vectorizer_path)
 print("Vectorizer successfully fit and saved to tfidf_vectorizer.pkl!")

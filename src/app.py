@@ -262,6 +262,8 @@ st.markdown('<div class="subtitle">Screen resumes using machine learning and eva
 st.sidebar.markdown("### Configuration")
 
 # Model Loading
+import os
+
 @st.cache_resource
 def load_models_and_vectorizer():
     models = {
@@ -271,28 +273,29 @@ def load_models_and_vectorizer():
         "lightgbm": None
     }
     errors = {}
+    base_dir = os.path.dirname(__file__)
     
     # Load Vectorizer
     try:
-        models["vectorizer"] = joblib.load("tfidf_vectorizer.pkl")
+        models["vectorizer"] = joblib.load(os.path.join(base_dir, "tfidf_vectorizer.pkl"))
     except Exception as e:
         errors["Vectorizer"] = str(e)
         
     # Load SVM
     try:
-        models["svm"] = joblib.load("svm.pkl")
+        models["svm"] = joblib.load(os.path.join(base_dir, "svm_model.pkl"))
     except Exception as e:
         errors["Support Vector Machine (SVM)"] = str(e)
         
     # Load XGBoost
     try:
-        models["xgboost"] = joblib.load("xgboost.pkl")
+        models["xgboost"] = joblib.load(os.path.join(base_dir, "xgboost_model.pkl"))
     except Exception as e:
         errors["XGBoost Classifier"] = str(e)
         
     # Load LightGBM
     try:
-        models["lightgbm"] = joblib.load("lightgbm.pkl")
+        models["lightgbm"] = joblib.load(os.path.join(base_dir, "lightgbm_model.pkl"))
     except Exception as e:
         errors["LightGBM Classifier"] = str(e)
         
