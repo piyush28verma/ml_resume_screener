@@ -404,22 +404,62 @@ if submit_btn:
         st.error("TF-IDF Vectorizer is not loaded. Please make sure tfidf_vectorizer.pkl is available.")
     else:
         # Preprocessing & Inference
+        from sklearn.metrics.pairwise import cosine_similarity
+        
         with st.spinner("Processing texts & running matching models..."):
-            # Concatenate JD and Resume (as done in notebook cell 18)
-            combined_text = jd_input + " " + resume_text
-            combined_clean = clean_text(combined_text)
+            # Preprocess resume and JD individually
+            resume_clean = clean_text(resume_text)
+            jd_clean = clean_text(jd_input)
             
             # Vectorize
-            combined_tfidf = vectorizer.transform([combined_clean])
+            v_res = vectorizer.transform([resume_clean])
+            v_jd = vectorizer.transform([jd_clean])
             
-            # Predict match score (1 to 5)
-            score = 1
+            # 1. Calculate ML score on the resume itself
+            ml_score = 1
             if model_option.startswith("Support Vector Machine"):
-                score = svm_model.predict(combined_tfidf)[0]
+                ml_score = svm_model.predict(v_res)[0]
             elif model_option.startswith("LightGBM"):
-                score = lgb_model.predict(combined_tfidf)[0] + 1
+                ml_score = lgb_model.predict(v_res)[0] + 1
             else:
-                score = xgb_model.predict(combined_tfidf)[0] + 1
+                ml_score = xgb_model.predict(v_res)[0] + 1
+            ml_score = int(np.clip(ml_score, 1, 5))
+            
+            # 2. Calculate Cosine Similarity
+            sim_score = cosine_similarity(v_jd, v_res)[0][0]
+            if sim_score >= 0.7:
+                cosine_score = 5
+            elif sim_score >= 0.5:
+                cosine_score = 4
+            elif sim_score >= 0.3:
+                cosine_score = 3
+            elif sim_score >= 0.15:
+                cosine_score = 2
+            else:
+                cosine_score = 1
+                
+            # 3. Calculate Skill Match Score
+            matched_skills, missing_skills = analyze_skills(jd_input, resume_text)
+            total_required = len(matched_skills) + len(missing_skills)
+            
+            if total_required > 0:
+                match_ratio = len(matched_skills) / total_required
+                if match_ratio >= 0.8:
+                    skill_score = 5
+                elif match_ratio >= 0.6:
+                    skill_score = 4
+                elif match_ratio >= 0.35:
+                    skill_score = 3
+                elif match_ratio >= 0.15:
+                    skill_score = 2
+                else:
+                    skill_score = 1
+                
+                # Hybrid Score: 30% ML, 50% Skill Match, 20% Cosine
+                score = round((ml_score * 0.30) + (skill_score * 0.50) + (cosine_score * 0.20))
+            else:
+                # Fallback if no specific skills found in JD: 60% ML, 40% Cosine
+                score = round((ml_score * 0.60) + (cosine_score * 0.40))
                 
             # Bound prediction between 1 and 5
             score = int(np.clip(score, 1, 5))
@@ -442,9 +482,6 @@ if submit_btn:
             score_label = labels_map[score]
             score_pct = int(score * 20)
             score_color = colors_map[score]
-            
-            # Analyze skills
-            matched_skills, missing_skills = analyze_skills(jd_input, resume_text)
             
         # Display Results
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
