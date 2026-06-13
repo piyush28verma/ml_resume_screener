@@ -91,12 +91,12 @@ pip install pandas scikit-learn==1.6.1 joblib lightgbm xgboost nltk PyPDF2 fasta
 ### 4. Re-fit TF-IDF Vectorizer
 Recreate the deterministic TF-IDF vocabulary pickle file matching your training setup:
 ```bash
-python fit_vectorizer.py
+python src/fit_vectorizer.py
 ```
 
 ### 5. Start the Web App
 Launch the interactive Streamlit dashboard:
 ```bash
-streamlit run app.py
+streamlit run src/app.py
 ```
 Open your browser and navigate to **[http://localhost:8501](http://localhost:8501)**.
